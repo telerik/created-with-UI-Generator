@@ -4,7 +4,9 @@ A Blazor Web App featuring a real estate property search page built with [Teleri
 
 ## Video
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/jUho9Jy_Qy4?si=d5OxhszltkhEHyMx" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[![Watch the video](https://img.youtube.com/vi/jUho9Jy_Qy4/0.jpg)](https://www.youtube.com/embed/jUho9Jy_Qy4?si=d5OxhszltkhEHyMx)
+
+<iframe width="560" height="315" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## About the Prompt
 
