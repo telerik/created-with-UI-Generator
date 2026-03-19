@@ -12,6 +12,12 @@ The real estate search page was generated using a GitHub Copilot agent prompt lo
 
 This is a `.prompt.md` file — a reusable prompt that can be run directly in VS Code via the **GitHub Copilot Chat** panel. Open it in the editor, type `/real-estate-search-page`, and the agent will execute the prompt, generating the entire page in one go. The prompt includes detailed instructions for the UI layout, filter options, and property result cards, ensuring a comprehensive real estate search experience.
 
+## Time Savings
+
+Using this prompt with the Telerik UI Generator saves an estimated **2 hours** compared to manually building the same page from scratch. The agent handles all the component selection, layout design, and code generation, allowing you to focus on customizing and enhancing the UI rather than writing boilerplate code.
+
+Total build time with the prompt: **10 minutes** (including review and minor adjustments)
+
 ## What the Prompt Builds
 
 Running the prompt generates the complete real estate search page in `BlazorRealEstate/Components/Pages/Home.razor`. The page includes:
