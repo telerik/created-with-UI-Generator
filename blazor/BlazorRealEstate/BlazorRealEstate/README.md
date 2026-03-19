@@ -2,6 +2,10 @@
 
 A Blazor Web App featuring a real estate property search page built with [Telerik UI for Blazor](https://www.telerik.com/blazor-ui).
 
+## Video
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/jUho9Jy_Qy4?si=d5OxhszltkhEHyMx" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## About the Prompt
 
 The real estate search page was generated using a GitHub Copilot agent prompt located at:
