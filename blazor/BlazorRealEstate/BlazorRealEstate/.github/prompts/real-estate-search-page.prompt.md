@@ -8,7 +8,7 @@ tools: [execute, read, edit, search, web, agent, todo, telerik-blazor-mcp/*]
 
 <!-- 
 estimated-human-time: 2 hours
-estimated-ai-time: 15 minutes
+estimated-ai-time: 10:28 minutes:seconds
 -->
 
 # Instructions

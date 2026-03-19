@@ -1,32 +1,773 @@
 ﻿@page "/"
 
-<PageTitle>Telerik Blazor App | Home</PageTitle>
+<PageTitle>Real Estate Search | Find Your Dream Home</PageTitle>
 
-<div id="home-page">
-    <HomeSvg />
+<div class="re-page">
 
-    <h1>Hello, Telerik UI for Blazor!</h1>
+    <!-- Mobile filter toggle -->
+    <div class="re-mobile-toggle">
+        <TelerikButton OnClick="@ToggleMobileFilter"
+                       Icon="@SvgIcon.FilterSmall"
+                       ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">
+            @(ShowMobileFilter ? "Hide Filters" : "Show Filters")
+        </TelerikButton>
+    </div>
 
-    <p>Welcome to your new Telerik Blazor app.</p>
+    <div class="re-layout">
+
+        <!-- ═══════════════ FILTER SIDEBAR ═══════════════ -->
+        <aside class="re-sidebar @(ShowMobileFilter ? "re-sidebar--open" : "")">
+            <div class="re-filter-panel">
+
+                <h2 class="re-filter-heading">
+                    <TelerikSvgIcon Icon="@SvgIcon.FilterSmall" /> Search Filters
+                </h2>
+
+                <!-- Keyword -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Keywords</label>
+                    <TelerikTextBox @bind-Value="@FilterKw"
+                                    Placeholder="e.g. pool, open floor plan…"
+                                    Width="100%" />
+                </div>
+
+                <!-- Location -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Location</label>
+                    <TelerikTextBox @bind-Value="@FilterLocation"
+                                    Placeholder="City, ZIP, or neighborhood"
+                                    Width="100%" />
+                </div>
+
+                <!-- Price Range -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Price Range</label>
+                    <div class="re-range-display">
+                        <span>@FormatSliderPrice(PriceMin)</span>
+                        <span>@FormatSliderPrice(PriceMax)</span>
+                    </div>
+                    <TelerikRangeSlider Min="0" Max="2000000"
+                                        SmallStep="10000"
+                                        LargeStep="500000"
+                                        Class="re-slider"
+                                        @bind-StartValue="@PriceMin"
+                                        @bind-EndValue="@PriceMax" />
+                </div>
+
+                <!-- Property Type -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Property Type</label>
+                    <TelerikChipList Data="@PropertyTypes"
+                                     TextField="@nameof(ChipItem.Text)"
+                                     SelectionMode="@ChipListSelectionMode.Multiple"
+                                     @bind-SelectedItems="@SelectedPropertyTypes" />
+                </div>
+
+                <!-- Bedrooms -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Bedrooms</label>
+                    <div class="re-range-display">
+                        <span>@BedsMin bd</span>
+                        <span>@BedsMax bd</span>
+                    </div>
+                    <TelerikRangeSlider Min="0" Max="8"
+                                        SmallStep="1"
+                                        LargeStep="4"
+                                        Class="re-slider"
+                                        @bind-StartValue="@BedsMin"
+                                        @bind-EndValue="@BedsMax" />
+                </div>
+
+                <!-- Bathrooms -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Bathrooms</label>
+                    <div class="re-range-display">
+                        <span>@BathsMin ba</span>
+                        <span>@BathsMax ba</span>
+                    </div>
+                    <TelerikRangeSlider Min="1" Max="6"
+                                        SmallStep="1"
+                                        LargeStep="3"
+                                        Class="re-slider"
+                                        @bind-StartValue="@BathsMin"
+                                        @bind-EndValue="@BathsMax" />
+                </div>
+
+                <!-- Square Footage -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Square Footage</label>
+                    <div class="re-range-display">
+                        <span>@SqFtMin.ToString("N0") sqft</span>
+                        <span>@SqFtMax.ToString("N0") sqft</span>
+                    </div>
+                    <TelerikRangeSlider Min="0" Max="6000"
+                                        SmallStep="100"
+                                        LargeStep="1000"
+                                        Class="re-slider"
+                                        @bind-StartValue="@SqFtMin"
+                                        @bind-EndValue="@SqFtMax" />
+                </div>
+
+                <!-- Lot Size -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Lot Size (acres)</label>
+                    <div class="re-range-display">
+                        <span>@LotMin.ToString("F1") ac</span>
+                        <span>@LotMax.ToString("F1") ac</span>
+                    </div>
+                    <TelerikRangeSlider Min="0.0m" Max="5.0m"
+                                        SmallStep="0.1m"
+                                        LargeStep="1.0m"
+                                        Class="re-slider"
+                                        @bind-StartValue="@LotMin"
+                                        @bind-EndValue="@LotMax" />
+                </div>
+
+                <!-- Year Built -->
+                <div class="re-filter-group">
+                    <label class="re-filter-label">Year Built</label>
+                    <div class="re-range-display">
+                        <span>@YearMin</span>
+                        <span>@YearMax</span>
+                    </div>
+                    <TelerikRangeSlider Min="1960" Max="2025"
+                                        SmallStep="1"
+                                        LargeStep="10"
+                                        Class="re-slider"
+                                        @bind-StartValue="@YearMin"
+                                        @bind-EndValue="@YearMax" />
+                </div>
+
+                <!-- Amenities (collapsible) -->
+                <div class="re-filter-group">
+                    <TelerikPanelBar Data="@AmenityPanelData"
+                                     ExpandMode="@PanelBarExpandMode.Single"
+                                     @bind-ExpandedItems="@AmenityExpanded">
+                        <PanelBarBindings>
+                            <PanelBarBinding Level="0" TextField="@nameof(PanelItem.Text)">
+                                <ContentTemplate>
+                                    <div class="re-amenities-grid">
+                                        @foreach (var amenity in AmenityItems)
+                                        {
+                                            var aid = amenity.Id;
+                                            <div class="re-amenity-row">
+                                                <TelerikCheckBox @bind-Value="@amenity.IsChecked"
+                                                                 Id="@aid" />
+                                                <label for="@aid">@amenity.Name</label>
+                                            </div>
+                                        }
+                                    </div>
+                                </ContentTemplate>
+                            </PanelBarBinding>
+                        </PanelBarBindings>
+                    </TelerikPanelBar>
+                </div>
+
+                <!-- Actions -->
+                <div class="re-filter-actions">
+                    <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                   OnClick="@ApplyFilters"
+                                   Class="re-btn-full">
+                        Search Properties
+                    </TelerikButton>
+                    <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
+                                   OnClick="@ResetFilters"
+                                   Class="re-btn-full">
+                        Clear Filters
+                    </TelerikButton>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- ═══════════════ RESULTS PANEL ═══════════════ -->
+        <section class="re-results">
+
+            <!-- Sort bar -->
+            <div class="re-sort-bar">
+                <span class="re-result-count">@FilteredProperties.Count @(FilteredProperties.Count == 1 ? "property" : "properties") found</span>
+                <div class="re-sort-group">
+                    <span class="re-sort-label">Sort:</span>
+                    <TelerikButton Size="@ThemeConstants.Button.Size.Small"
+                                   FillMode="@(SortMode == "best" ? ThemeConstants.Button.FillMode.Solid : ThemeConstants.Button.FillMode.Outline)"
+                                   ThemeColor="@(SortMode == "best" ? ThemeConstants.Button.ThemeColor.Primary : ThemeConstants.Button.ThemeColor.Base)"
+                                   OnClick="@(() => SetSort("best"))">
+                        Best Match
+                    </TelerikButton>
+                    <TelerikButton Size="@ThemeConstants.Button.Size.Small"
+                                   FillMode="@(SortMode == "top" ? ThemeConstants.Button.FillMode.Solid : ThemeConstants.Button.FillMode.Outline)"
+                                   ThemeColor="@(SortMode == "top" ? ThemeConstants.Button.ThemeColor.Primary : ThemeConstants.Button.ThemeColor.Base)"
+                                   OnClick="@(() => SetSort("top"))">
+                        Top Selling
+                    </TelerikButton>
+                    <TelerikButton Size="@ThemeConstants.Button.Size.Small"
+                                   FillMode="@(SortMode.StartsWith("price") ? ThemeConstants.Button.FillMode.Solid : ThemeConstants.Button.FillMode.Outline)"
+                                   ThemeColor="@(SortMode.StartsWith("price") ? ThemeConstants.Button.ThemeColor.Primary : ThemeConstants.Button.ThemeColor.Base)"
+                                   OnClick="@TogglePriceSort">
+                        Price @(SortMode == "price-asc" ? "↑" : SortMode == "price-desc" ? "↓" : "")
+                    </TelerikButton>
+                </div>
+            </div>
+
+            <!-- Property cards -->
+            <div class="re-card-grid">
+                @foreach (var p in FilteredProperties)
+                {
+                    <TelerikCard Class="re-prop-card">
+                        <CardImage Src="@p.ImageUrl" />
+                        <CardBody>
+                            <div class="re-card-price">@FormatCardPrice(p.Price)</div>
+                            <CardTitle>@p.Title</CardTitle>
+                            <p class="re-card-address">
+                                <TelerikSvgIcon Icon="@SvgIcon.BuildingsSolid" />
+                                @p.Address
+                            </p>
+                            <div class="re-card-meta">
+                                <span class="re-card-stat">
+                                    <TelerikSvgIcon Icon="@SvgIcon.BedSolid" />
+                                    @p.Bedrooms bd
+                                </span>
+                                <span class="re-card-stat">
+                                    <TelerikSvgIcon Icon="@SvgIcon.BathtubeSolid" />
+                                    @p.Bathrooms ba
+                                </span>
+                                <span class="re-card-stat">
+                                    <TelerikSvgIcon Icon="@SvgIcon.Area" />
+                                    @p.SqFt.ToString("N0") sqft
+                                </span>
+                            </div>
+                        </CardBody>
+                    </TelerikCard>
+                }
+                @if (FilteredProperties.Count == 0)
+                {
+                    <div class="re-no-results">
+                        <p>No properties match your current filters.</p>
+                        <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                       OnClick="@ResetFilters">Clear Filters</TelerikButton>
+                    </div>
+                }
+            </div>
+        </section>
+
+    </div>
 </div>
 
 <style>
-    #home-page {
-        margin-left: auto;
-        margin-right: auto;
-        max-width: max-content;
-        text-align: center;
-        font-size: var(--kendo-font-size-xl);
+    /* ── Page shell ── */
+    .re-page {
+        padding: 1rem 1.25rem;
     }
 
-    @@media (min-height: calc(56px + 50px + 400px)) {
-        /* header + footer + home page container*/
-        #home-page {
-            margin-top: calc(50vh - 28px - 25px - 200px);
+    .re-mobile-toggle {
+        display: none;
+        margin-bottom: 1rem;
+    }
+
+    /* ── Golden-ratio two-column layout ── */
+    .re-layout {
+        display: grid;
+        grid-template-columns: 1fr 1.618fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    /* ── Filter sidebar ── */
+    .re-sidebar {
+        position: sticky;
+        top: 1rem;
+    }
+
+    .re-filter-panel {
+        background: var(--kendo-color-surface-alt, #f9f9f9);
+        border: 1px solid var(--kendo-color-border, #e0e0e0);
+        border-radius: var(--kendo-border-radius-lg, 8px);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .re-filter-heading {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .re-filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .re-filter-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--kendo-color-on-base, #555);
+    }
+
+    .re-range-display {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--kendo-color-primary, #ff6358);
+    }
+
+    /* Hide slider graduation marks / tick labels */
+    .re-slider .k-tick,
+    .re-slider .k-tick-sm,
+    .re-slider .k-label {
+        display: none;
+    }
+
+    .re-slider {
+        width: 100%;
+    }
+
+    /* Amenities panel (inside PanelBar content) */
+    .re-amenities-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.35rem 0.75rem;
+        padding: 0.5rem 0.25rem 0.25rem;
+    }
+
+    .re-amenity-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.88rem;
+    }
+
+    .re-amenity-row label {
+        cursor: pointer;
+    }
+
+    .re-filter-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-top: 0.25rem;
+    }
+
+    .re-btn-full {
+        width: 100%;
+    }
+
+    .re-btn-full.k-button {
+        width: 100%;
+    }
+
+    /* ── Results section ── */
+    .re-results {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .re-sort-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0.65rem 1rem;
+        background: var(--kendo-color-surface-alt, #f9f9f9);
+        border: 1px solid var(--kendo-color-border, #e0e0e0);
+        border-radius: var(--kendo-border-radius-md, 6px);
+    }
+
+    .re-result-count {
+        font-size: 0.88rem;
+        color: var(--kendo-color-subtle, #777);
+    }
+
+    .re-sort-group {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .re-sort-label {
+        font-size: 0.82rem;
+        color: var(--kendo-color-subtle, #777);
+    }
+
+    /* ── Property card grid ── */
+    .re-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .re-prop-card {
+        cursor: pointer;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .re-prop-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.13);
+        transform: translateY(-3px);
+    }
+
+    .re-prop-card .k-card-image {
+        height: 185px;
+        object-fit: cover;
+        width: 100%;
+        display: block;
+    }
+
+    .re-card-price {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--kendo-color-primary, #ff6358);
+        margin-bottom: 0.2rem;
+    }
+
+    .re-prop-card .k-card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0.2rem 0 0.5rem;
+    }
+
+    .re-card-address {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.83rem;
+        color: var(--kendo-color-subtle, #777);
+        margin: 0 0 0.75rem;
+    }
+
+    .re-card-meta {
+        display: flex;
+        gap: 0.9rem;
+        flex-wrap: wrap;
+    }
+
+    .re-card-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* ── No results ── */
+    .re-no-results {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--kendo-color-subtle, #777);
+    }
+
+    /* ── Mobile ── */
+    @@media (max-width: 768px) {
+        .re-mobile-toggle {
+            display: block;
+        }
+
+        .re-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .re-sidebar {
+            display: none;
+            position: static;
+        }
+
+        .re-sidebar.re-sidebar--open {
+            display: block;
         }
     }
 </style>
 
 @code {
 
+    // ── Filter state ──────────────────────────────────────────────────────────
+    private string FilterKw { get; set; } = "";
+    private string FilterLocation { get; set; } = "";
+    private int PriceMin { get; set; } = 100_000;
+    private int PriceMax { get; set; } = 1_500_000;
+    private int BedsMin { get; set; } = 0;
+    private int BedsMax { get; set; } = 8;
+    private int BathsMin { get; set; } = 1;
+    private int BathsMax { get; set; } = 6;
+    private int SqFtMin { get; set; } = 0;
+    private int SqFtMax { get; set; } = 6000;
+    private decimal LotMin { get; set; } = 0.0m;
+    private decimal LotMax { get; set; } = 5.0m;
+    private int YearMin { get; set; } = 1960;
+    private int YearMax { get; set; } = 2025;
+    private IEnumerable<ChipItem> SelectedPropertyTypes { get; set; } = new List<ChipItem>();
+    private bool ShowMobileFilter { get; set; } = false;
+    private string SortMode { get; set; } = "best";
+
+    // ── Data models ───────────────────────────────────────────────────────────
+    public class ChipItem
+    {
+        public string Text { get; set; } = "";
+    }
+
+    public class AmenityItem
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public bool IsChecked { get; set; }
+    }
+
+    public class PanelItem
+    {
+        public string Text { get; set; } = "";
+    }
+
+    public class PropertyModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Address { get; set; } = "";
+        public int Price { get; set; }
+        public int Bedrooms { get; set; }
+        public int Bathrooms { get; set; }
+        public int SqFt { get; set; }
+        public decimal LotAcres { get; set; }
+        public int YearBuilt { get; set; }
+        public string PropertyType { get; set; } = "";
+        public string ImageUrl { get; set; } = "";
+        public bool TopSelling { get; set; }
+        public int MatchScore { get; set; }
+        public List<string> Amenities { get; set; } = new();
+    }
+
+    // ── Static lookup lists ───────────────────────────────────────────────────
+    private List<ChipItem> PropertyTypes { get; set; } = new()
+    {
+        new() { Text = "Single Family" },
+        new() { Text = "Condo" },
+        new() { Text = "Townhouse" },
+        new() { Text = "Multi-Family" },
+        new() { Text = "Land" },
+        new() { Text = "New Construction" },
+    };
+
+    private List<AmenityItem> AmenityItems { get; set; } = new()
+    {
+        new() { Id = "am-pool",      Name = "Pool" },
+        new() { Id = "am-gym",       Name = "Gym" },
+        new() { Id = "am-garage",    Name = "Garage" },
+        new() { Id = "am-ac",        Name = "A/C" },
+        new() { Id = "am-fireplace", Name = "Fireplace" },
+        new() { Id = "am-bball",     Name = "Basketball Court" },
+        new() { Id = "am-spa",       Name = "Spa / Hot Tub" },
+        new() { Id = "am-security",  Name = "Security System" },
+        new() { Id = "am-solar",     Name = "Solar Panels" },
+        new() { Id = "am-ev",        Name = "EV Charging" },
+        new() { Id = "am-waterfront",Name = "Waterfront" },
+        new() { Id = "am-dock",      Name = "Boat Dock" },
+    };
+
+    private List<PanelItem> AmenityPanelData { get; set; } = new()
+    {
+        new() { Text = "Amenities" }
+    };
+
+    private IEnumerable<object> AmenityExpanded { get; set; } = new List<object>();
+
+    // ── Property data ─────────────────────────────────────────────────────────
+    private List<PropertyModel> AllProperties { get; set; } = new()
+    {
+        new() {
+            Id = 1, Title = "Modern Family Home with Open Plan",
+            Address = "1234 Maple Street, Austin, TX 78701",
+            Price = 575_000, Bedrooms = 4, Bathrooms = 3, SqFt = 2_450,
+            LotAcres = 0.25m, YearBuilt = 2018, PropertyType = "Single Family",
+            ImageUrl = "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=250&fit=crop",
+            TopSelling = true, MatchScore = 95,
+            Amenities = new() { "Garage", "A/C", "Security System" }
+        },
+        new() {
+            Id = 2, Title = "Charming Victorian Cottage",
+            Address = "56 Oak Lane, Portland, OR 97201",
+            Price = 389_000, Bedrooms = 3, Bathrooms = 2, SqFt = 1_780,
+            LotAcres = 0.18m, YearBuilt = 1924, PropertyType = "Single Family",
+            ImageUrl = "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=250&fit=crop",
+            TopSelling = false, MatchScore = 82,
+            Amenities = new() { "Fireplace", "A/C" }
+        },
+        new() {
+            Id = 3, Title = "Downtown Luxury Penthouse",
+            Address = "800 W Madison Ave, Chicago, IL 60607",
+            Price = 1_150_000, Bedrooms = 3, Bathrooms = 2, SqFt = 2_100,
+            LotAcres = 0.0m, YearBuilt = 2021, PropertyType = "Condo",
+            ImageUrl = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=250&fit=crop",
+            TopSelling = true, MatchScore = 88,
+            Amenities = new() { "Gym", "Spa / Hot Tub", "Security System", "EV Charging" }
+        },
+        new() {
+            Id = 4, Title = "Spacious Suburban Ranch",
+            Address = "2201 Elm Drive, Scottsdale, AZ 85251",
+            Price = 720_000, Bedrooms = 5, Bathrooms = 3, SqFt = 3_200,
+            LotAcres = 0.42m, YearBuilt = 2005, PropertyType = "Single Family",
+            ImageUrl = "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=400&h=250&fit=crop",
+            TopSelling = false, MatchScore = 79,
+            Amenities = new() { "Pool", "Garage", "A/C" }
+        },
+        new() {
+            Id = 5, Title = "Cozy Lakefront Retreat",
+            Address = "14 Lakeview Blvd, Minneapolis, MN 55410",
+            Price = 495_000, Bedrooms = 3, Bathrooms = 2, SqFt = 1_920,
+            LotAcres = 0.35m, YearBuilt = 1995, PropertyType = "Single Family",
+            ImageUrl = "https://images.unsplash.com/photo-1506974210756-8e1b8985d348?w=400&h=250&fit=crop",
+            TopSelling = true, MatchScore = 91,
+            Amenities = new() { "Boat Dock", "Fireplace", "Garage", "Waterfront" }
+        },
+        new() {
+            Id = 6, Title = "Contemporary Townhouse",
+            Address = "301 Pearl St, Denver, CO 80203",
+            Price = 310_000, Bedrooms = 2, Bathrooms = 2, SqFt = 1_340,
+            LotAcres = 0.05m, YearBuilt = 2017, PropertyType = "Townhouse",
+            ImageUrl = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop",
+            TopSelling = false, MatchScore = 74,
+            Amenities = new() { "Garage", "A/C" }
+        },
+        new() {
+            Id = 7, Title = "Grand Colonial Estate",
+            Address = "7700 Fairway Drive, Raleigh, NC 27615",
+            Price = 1_450_000, Bedrooms = 6, Bathrooms = 5, SqFt = 5_200,
+            LotAcres = 1.2m, YearBuilt = 2003, PropertyType = "Single Family",
+            ImageUrl = "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400&h=250&fit=crop",
+            TopSelling = true, MatchScore = 86,
+            Amenities = new() { "Pool", "Gym", "Garage", "Security System", "Solar Panels" }
+        },
+        new() {
+            Id = 8, Title = "Urban Studio Loft",
+            Address = "222 Art District Way, Seattle, WA 98101",
+            Price = 245_000, Bedrooms = 1, Bathrooms = 1, SqFt = 720,
+            LotAcres = 0.0m, YearBuilt = 2019, PropertyType = "Condo",
+            ImageUrl = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=250&fit=crop",
+            TopSelling = false, MatchScore = 70,
+            Amenities = new() { "Gym", "Security System", "EV Charging" }
+        },
+        new() {
+            Id = 9, Title = "Hilltop Mediterranean Villa",
+            Address = "5555 Vista Hermosa Lane, San Diego, CA 92108",
+            Price = 1_875_000, Bedrooms = 5, Bathrooms = 4, SqFt = 4_800,
+            LotAcres = 0.8m, YearBuilt = 2008, PropertyType = "Single Family",
+            ImageUrl = "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&h=250&fit=crop",
+            TopSelling = false, MatchScore = 77,
+            Amenities = new() { "Pool", "Spa / Hot Tub", "Garage", "Solar Panels", "Security System" }
+        },
+        new() {
+            Id = 10, Title = "Eco-Smart New Construction",
+            Address = "900 Green Valley Rd, Nashville, TN 37201",
+            Price = 625_000, Bedrooms = 4, Bathrooms = 3, SqFt = 2_700,
+            LotAcres = 0.3m, YearBuilt = 2024, PropertyType = "New Construction",
+            ImageUrl = "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=250&fit=crop",
+            TopSelling = true, MatchScore = 93,
+            Amenities = new() { "Solar Panels", "EV Charging", "A/C", "Garage", "Security System" }
+        },
+        new() {
+            Id = 11, Title = "Waterfront Multi-Family Investment",
+            Address = "430 Harbor View Dr, Miami, FL 33139",
+            Price = 980_000, Bedrooms = 4, Bathrooms = 4, SqFt = 3_600,
+            LotAcres = 0.22m, YearBuilt = 1998, PropertyType = "Multi-Family",
+            ImageUrl = "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=400&h=250&fit=crop",
+            TopSelling = true, MatchScore = 84,
+            Amenities = new() { "Waterfront", "Pool", "Boat Dock", "Garage" }
+        },
+        new() {
+            Id = 12, Title = "Rustic Mountain Cabin",
+            Address = "12 Pine Ridge Rd, Aspen, CO 81611",
+            Price = 835_000, Bedrooms = 3, Bathrooms = 2, SqFt = 1_650,
+            LotAcres = 2.1m, YearBuilt = 1985, PropertyType = "Single Family",
+            ImageUrl = "https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=400&h=250&fit=crop",
+            TopSelling = false, MatchScore = 72,
+            Amenities = new() { "Fireplace", "Garage" }
+        },
+    };
+
+    private List<PropertyModel> FilteredProperties { get; set; } = new();
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    protected override void OnInitialized() => ApplyFilters();
+
+    // ── Filter logic ──────────────────────────────────────────────────────────
+    private void ApplyFilters()
+    {
+        var selectedTypes = SelectedPropertyTypes.Select(x => x.Text).ToHashSet();
+        var requiredAmenities = AmenityItems.Where(a => a.IsChecked).Select(a => a.Name).ToHashSet();
+
+        var results = AllProperties.Where(p =>
+            (string.IsNullOrWhiteSpace(FilterKw) ||
+                p.Title.Contains(FilterKw, StringComparison.OrdinalIgnoreCase) ||
+                p.Address.Contains(FilterKw, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(FilterLocation) ||
+                p.Address.Contains(FilterLocation, StringComparison.OrdinalIgnoreCase)) &&
+            p.Price >= PriceMin && p.Price <= PriceMax &&
+            p.Bedrooms >= BedsMin && p.Bedrooms <= BedsMax &&
+            p.Bathrooms >= BathsMin && p.Bathrooms <= BathsMax &&
+            p.SqFt >= SqFtMin && p.SqFt <= SqFtMax &&
+            p.LotAcres >= LotMin && p.LotAcres <= LotMax &&
+            p.YearBuilt >= YearMin && p.YearBuilt <= YearMax &&
+            (!selectedTypes.Any() || selectedTypes.Contains(p.PropertyType)) &&
+            (!requiredAmenities.Any() || requiredAmenities.All(a => p.Amenities.Contains(a)))
+        );
+
+        FilteredProperties = SortResults(results).ToList();
+    }
+
+    private void ResetFilters()
+    {
+        FilterKw = "";
+        FilterLocation = "";
+        PriceMin = 100_000;    PriceMax = 1_500_000;
+        BedsMin = 0;           BedsMax = 8;
+        BathsMin = 1;          BathsMax = 6;
+        SqFtMin = 0;           SqFtMax = 6000;
+        LotMin = 0.0m;         LotMax = 5.0m;
+        YearMin = 1960;        YearMax = 2025;
+        SelectedPropertyTypes = new List<ChipItem>();
+        foreach (var a in AmenityItems) a.IsChecked = false;
+        SortMode = "best";
+        ApplyFilters();
+    }
+
+    // ── Sort ──────────────────────────────────────────────────────────────────
+    private void SetSort(string mode)
+    {
+        SortMode = mode;
+        FilteredProperties = SortResults(FilteredProperties).ToList();
+    }
+
+    private void TogglePriceSort()
+    {
+        SortMode = SortMode == "price-asc" ? "price-desc" : "price-asc";
+        FilteredProperties = SortResults(FilteredProperties).ToList();
+    }
+
+    private IEnumerable<PropertyModel> SortResults(IEnumerable<PropertyModel> list) =>
+        SortMode switch
+        {
+            "top"        => list.OrderByDescending(p => p.TopSelling).ThenByDescending(p => p.MatchScore),
+            "price-asc"  => list.OrderBy(p => p.Price),
+            "price-desc" => list.OrderByDescending(p => p.Price),
+            _            => list.OrderByDescending(p => p.MatchScore),   // "best"
+        };
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+    private static string FormatSliderPrice(int price) =>
+        price >= 1_000_000
+            ? $"${price / 1_000_000.0:F2}M"
+            : $"${price / 1000}K";
+
+    private static string FormatCardPrice(int price) => $"${price:N0}";
+
+    private void ToggleMobileFilter() => ShowMobileFilter = !ShowMobileFilter;
 }
